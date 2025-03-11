@@ -21,7 +21,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(indexes = {
-    @Index(name = "idx_user_id", columnList = "userId")  // ✅ 유저별 포인트 한도 조회 최적화
+    @Index(name = "idx_user_id", columnList = "userId")
 })
 public class UserPointLimit {
 
