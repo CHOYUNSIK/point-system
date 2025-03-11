@@ -1,8 +1,8 @@
 package com.musinsa.point.error.exception;
 
 
-import com.tradlinx.terminal.error.code.ErrorCode;
-import com.tradlinx.terminal.error.code.ResponseEnumType;
+import com.musinsa.point.error.code.ErrorCode;
+import com.musinsa.point.error.code.ResponseEnumType;
 
 public class GeneralException extends AbstractGlobalException{
     public GeneralException(ResponseEnumType code) {
