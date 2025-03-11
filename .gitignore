@@ -1,0 +1,59 @@
+# Gradle 관련 파일
+.gradle/
+**/build/
+!src/**/build/
+
+# Maven 관련 파일
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+# IDE 관련 파일 (IntelliJ, VS Code)
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.vscode/
+.history/
+
+# 운영 체제(OS) 불필요한 파일
+.DS_Store
+Thumbs.db
+
+# 환경 변수 파일 보호
+.env
+application-*.yml
+application-*.properties
+
+# 로그 파일 및 실행 관련 임시 파일
+logs/
+*.log
+*.pid
+*.seed
+*.pid.lock
+nohup.out
+
+# Lombok 설정 제외
+.lombok.config
+
+# 테스트 관련 파일 제외
+coverage/
+*.lcov
+jacoco.exec
+test-output/
+
+# AWS 관련 키파일 보호
+.aws/
+*.pem
+
+# Docker 관련 파일 제외
+.dockerignore
+docker-compose.override.yml
