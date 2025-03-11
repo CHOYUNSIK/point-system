@@ -1,26 +1,16 @@
 package com.musinsa.point.error;
 
 
-
 import com.musinsa.point.error.code.ErrorCode;
 import com.musinsa.point.error.code.ResponseEnumType;
 import com.musinsa.point.error.exception.AbstractGlobalException;
-import jakarta.servlet.http.HttpServletRequest;
-
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import java.nio.file.AccessDeniedException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -28,7 +18,6 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -70,10 +59,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildSimpleErrorResponse(e, ErrorCode.BAD_REQUEST, request);
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Object> handleAccessDeniedException(AccessDeniedException e, WebRequest request) {
-        return buildSimpleErrorResponse(e, ErrorCode.UNAUTHORIZED, request);
-    }
 
     @Override
     protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
@@ -85,10 +70,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildSimpleErrorResponse(e, ErrorCode.INTERNAL_ERROR, request);
     }
 
-    @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        return buildSimpleErrorResponse(ex, ErrorCode.HTTP_MESSAGE_NOT_READABLE, request);
-    }
 
     // Helper Methods
     private void logError(WebRequest request, Exception e) {
