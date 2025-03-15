@@ -20,13 +20,13 @@ public abstract class AbstractGlobalException extends RuntimeException{
         this.message = responseCode.getMessage();
     }
 
-    public AbstractGlobalException(String message , ResponseEnumType responseCode) {
+    public AbstractGlobalException(ResponseEnumType responseCode, String message) {
         super(String.join(" : ", responseCode.getMessage(), message));
         this.message =  String.join(" : ", responseCode.getMessage(), message);
         this.code = responseCode;
     }
 
-    public AbstractGlobalException(String message, ResponseEnumType responseCode, Throwable cause) {
+    public AbstractGlobalException(ResponseEnumType responseCode, String message, Throwable cause) {
         super(String.join(" : ", responseCode.getMessage(), message), cause);
         this.message = String.join(" : ", responseCode.getMessage(), message);
         this.code = responseCode;

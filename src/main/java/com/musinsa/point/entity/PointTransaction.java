@@ -1,11 +1,17 @@
 package com.musinsa.point.entity;
 
+import com.musinsa.point.entity.enums.PointTransactionType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
@@ -29,14 +35,21 @@ public class PointTransaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long pointId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "point_id", nullable = false)
+    private Point point;
 
     @Column(nullable = false)
-    private Long orderId;
+    private long usedAmount;
 
-    private int usedAmount;
-    private boolean isCanceled;
+    @Column(nullable = false)
+    private long orderId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PointTransactionType transactionType;
+
+    private Long originalTransactionId;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -44,4 +57,15 @@ public class PointTransaction {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+
+    public boolean isUsed() {
+        return PointTransactionType.USE == this.transactionType ;
+    }
+
+    public boolean isCanceled() {
+        return PointTransactionType.CANCEL == this.transactionType;
+    }
+
+
 }
