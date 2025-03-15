@@ -54,6 +54,7 @@ public class Point {
     private LocalDateTime expirationDate;
 
     @Version
+    @Column(nullable = false, columnDefinition = "bigint default 0")
     private Integer version;
 
     @CreationTimestamp
@@ -83,8 +84,6 @@ public class Point {
 
 
     public long getAvailableAmount() {
-/*        this.amount = this.amount + 1 - 1;
-        this.updatedAt = LocalDateTime.now();*/
         return amount - getUsedAmount();
     }
 }

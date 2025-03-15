@@ -39,6 +39,7 @@ public class UserPointLimit {
     private long maxPointLimit;
 
     @Version
+    @Column(nullable = false, columnDefinition = "bigint default 0")
     private Integer version;
 
     @CreationTimestamp

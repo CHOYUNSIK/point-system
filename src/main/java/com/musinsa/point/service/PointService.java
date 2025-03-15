@@ -67,5 +67,16 @@ public class PointService {
         }
     }
 
+    @Transactional
+    public void cancelPoint(Long pointId) {
+        pointRepository.findById(pointId)
+                       .orElseThrow(() -> new GeneralException(ErrorCode.BAD_REQUEST, "해당 포인트 적립 내역을 찾을 수 없습니다."));
+
+        int deletedRows = pointRepository.deleteIfNotUsed(pointId);
+
+        if (deletedRows == 0) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "포인트가 이미 사용되어 취소할 수 없습니다.");
+        }
+    }
 }
 

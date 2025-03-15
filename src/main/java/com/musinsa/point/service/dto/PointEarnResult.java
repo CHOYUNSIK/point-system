@@ -7,7 +7,7 @@ import lombok.Builder;
 
 @Builder(access = AccessLevel.PRIVATE)
 public record PointEarnResult(
-
+    long id,
     long userId,
     long amount,
     boolean isManual,
@@ -17,6 +17,7 @@ public record PointEarnResult(
 
     public static PointEarnResult from(Point point) {
         return PointEarnResult.builder()
+                              .id(point.getId())
                               .userId(point.getUserId())
                               .amount(point.getAmount())
                               .isManual(point.isManual())

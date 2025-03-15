@@ -36,6 +36,7 @@ class PointServiceConcurrencyTest {
     @BeforeEach
     void setUp() {
         pointRepository.deleteAll();
+        userPointLimitRepository.deleteAll();
     }
 
     @Test
