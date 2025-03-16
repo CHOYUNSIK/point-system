@@ -94,45 +94,45 @@ POST /points/use/cancel
 
 ```mermaid
 classDiagram
-  class User {
-    +id: bigint
-  }
+    class User["user"] {
+        +id: bigint
+    }
 
-  class Point {
-    +id: bigint
-    +userId: bigint
-    +amount: bigint
-    +isManual: boolean
-    +expirationDate: timestamp(6)
-    +version: bigint
-    +createdAt: timestamp(6)
-    +updatedAt: timestamp(6)
-  }
+    class Point["point"] {
+        +id: bigint
+        +user_id: bigint
+        +amount: bigint
+        +is_manual: boolean
+        +expiration_date: timestamp(6)
+        +version: bigint
+        +created_at: timestamp(6)
+        +updated_at: timestamp(6)
+    }
 
-  class PointTransaction {
-    +id: bigint
-    +pointId: bigint
-    +usedAmount: bigint
-    +orderId: bigint
-    +transactionType: enum('CANCEL', 'USE')
-    +originalTransactionId: bigint
-    +version: bigint
-    +createdAt: timestamp(6)
-    +updatedAt: timestamp(6)
-  }
+    class PointTransaction["point_transaction"] {
+        +id: bigint
+        +point_id: bigint
+        +used_amount: bigint
+        +order_id: bigint
+        +transaction_type: enum('CANCEL', 'USE')
+        +original_transaction_id: bigint
+        +version: bigint
+        +created_at: timestamp(6)
+        +updated_at: timestamp(6)
+    }
 
-  class UserPointLimit {
-    +id: bigint
-    +userId: bigint
-    +maxPointLimit: bigint
-    +version: bigint
-    +createdAt: timestamp(6)
-    +updatedAt: timestamp(6)
-  }
+    class UserPointLimit["user_point_limit"] {
+        +id: bigint
+        +user_id: bigint
+        +max_point_limit: bigint
+        +version: bigint
+        +created_at: timestamp(6)
+        +updated_at: timestamp(6)
+    }
 
-  User "1" --> "*" Point : owns
-  User "1" --> "1" UserPointLimit : has
-  Point "1" --> "*" PointTransaction : contains
+    User "1" --> "*" Point : owns
+    User "1" --> "1" UserPointLimit : has
+    Point "1" --> "*" PointTransaction : contains
 ```
 
 
