@@ -45,3 +45,13 @@ VALUES
 INSERT INTO point_transaction (point_id, used_amount, order_id, transaction_type, created_at, updated_at)
 VALUES
     (7, 350, 1234, 'USE', DATEADD('DAY', -1, CURRENT_TIMESTAMP), DATEADD('DAY', -1, CURRENT_TIMESTAMP));
+
+--  포인트 적립 전체 사용
+INSERT INTO point (user_id, amount, is_manual, expiration_date, created_at, updated_at)
+VALUES
+    (11, 3000, FALSE, DATEADD('DAY', 100, CURRENT_TIMESTAMP), CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+INSERT INTO point_transaction (point_id, used_amount, order_id, transaction_type, created_at, updated_at)
+VALUES
+    (10, 3000, 4567, 'USE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+

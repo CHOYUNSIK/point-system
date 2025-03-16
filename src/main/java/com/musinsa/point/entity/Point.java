@@ -3,6 +3,8 @@ package com.musinsa.point.entity;
 import static lombok.AccessLevel.PRIVATE;
 import static lombok.AccessLevel.PROTECTED;
 
+import com.musinsa.point.error.code.ErrorCode;
+import com.musinsa.point.error.exception.GeneralException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,7 +25,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 
 
 @Entity
@@ -85,6 +86,14 @@ public class Point {
 
     public long getAvailableAmount() {
         return amount - getUsedAmount();
+    }
+
+    public void usePoints(long usedAmount, long orderId) {
+        if (usedAmount > getAvailableAmount()) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "포인트 사용 가능 금액 초과");
+        }
+        PointTransaction pointTransaction = PointTransaction.createUseTransaction(this, usedAmount, orderId);
+        this.transactions.add(pointTransaction);
     }
 }
 

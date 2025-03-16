@@ -11,7 +11,6 @@ public record PointEarnResponse(
     long userId,
     long amount,
     boolean isManual,
-    boolean isUsed,
     LocalDateTime expirationDate
 ) {
 
@@ -21,7 +20,6 @@ public record PointEarnResponse(
                                 .userId(result.userId())
                                 .amount(result.amount())
                                 .isManual(result.isManual())
-                                .isUsed(result.isUsed())
                                 .expirationDate(result.expirationDate())
                                 .build();
     }

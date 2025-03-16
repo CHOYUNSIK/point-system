@@ -6,7 +6,9 @@ import com.musinsa.point.error.exception.GeneralException;
 import com.musinsa.point.repository.PointRepository;
 import com.musinsa.point.service.dto.PointEarnCommand;
 import com.musinsa.point.service.dto.PointEarnResult;
-import java.time.LocalDateTime;
+import com.musinsa.point.service.dto.PointResult;
+import com.musinsa.point.service.dto.PointUseCommand;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +54,13 @@ public class PointService {
 
     @Transactional
     public long getTotalAvailableBalance(long userId) {
-        List<Point> validPoints = pointRepository.findByUserIdAndExpirationDateAfter(userId, LocalDateTime.now());
+        /*List<Point> validPoints = pointRepository.findByUserIdAndExpirationDateAfterOrderByIsManualDescExpirationDateAsc(
+            userId,
+            LocalDateTime.now()
+        );*/
+
+        List<Point> validPoints = pointRepository.findUsablePoints(userId);
+
         return validPoints.stream()
                           .mapToLong(Point::getAvailableAmount)
                           .sum();
@@ -77,6 +85,37 @@ public class PointService {
         if (deletedRows == 0) {
             throw new GeneralException(ErrorCode.BAD_REQUEST, "포인트가 이미 사용되어 취소할 수 없습니다.");
         }
+    }
+
+
+    @Retryable(
+        retryFor = ObjectOptimisticLockingFailureException.class,
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 100, multiplier = 2)
+    )
+    @Transactional
+    public List<PointResult> usePoints(PointUseCommand command) {
+        long userId = command.userId();
+        long totalAvailableBalance = getTotalAvailableBalance(userId);
+        long useAmount  = command.useAmount();
+        if (totalAvailableBalance < useAmount ) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "사용 가능한 포인트가 부족합니다.");
+        }
+
+        List<Point> pointList = pointRepository.findUsablePoints(userId);
+        List<PointResult> pointResultList = new ArrayList<>();
+        long remainingAmount = useAmount;
+        for (Point point : pointList) {
+            if (remainingAmount == 0) break;
+            long useThisTime = Math.min(point.getAvailableAmount(), remainingAmount);
+            point.usePoints(useThisTime, command.orderId());
+            pointResultList.add(PointResult.from(pointRepository.save(point)));
+            remainingAmount -= useThisTime;
+        }
+        if (remainingAmount > 0) {
+            throw new GeneralException(ErrorCode.BAD_REQUEST, "포인트 사용 중 오류가 발생했습니다.");
+        }
+        return pointResultList;
     }
 }
 

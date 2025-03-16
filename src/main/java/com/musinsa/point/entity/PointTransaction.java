@@ -16,11 +16,13 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+@Builder(access = AccessLevel.PRIVATE)
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -60,12 +62,20 @@ public class PointTransaction {
 
 
     public boolean isUsed() {
-        return PointTransactionType.USE == this.transactionType ;
+        return PointTransactionType.USE == this.transactionType;
     }
 
     public boolean isCanceled() {
         return PointTransactionType.CANCEL == this.transactionType;
     }
 
+    public static PointTransaction createUseTransaction(Point point, long usedAmount, long orderId) {
+        return PointTransaction.builder()
+                               .point(point)
+                               .usedAmount(usedAmount)
+                               .orderId(orderId)
+                               .transactionType(PointTransactionType.USE)
+                               .build();
+    }
 
 }

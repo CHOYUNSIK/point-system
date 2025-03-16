@@ -12,12 +12,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.musinsa.point.controller.dto.PointEarnRequest;
+import com.musinsa.point.controller.dto.PointUseRequest;
 import com.musinsa.point.error.code.ErrorCode;
 import com.musinsa.point.error.exception.GeneralException;
 import com.musinsa.point.service.PointService;
 import com.musinsa.point.service.dto.PointEarnCommand;
 import com.musinsa.point.service.dto.PointEarnResult;
+import com.musinsa.point.service.dto.PointResult;
+import com.musinsa.point.service.dto.PointUseCommand;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.instancio.Instancio;
 import org.instancio.Select;
 import org.junit.jupiter.api.DisplayName;
@@ -198,4 +202,71 @@ class PointControllerTest {
 
         then(pointService).should(times(1)).cancelPoint(3L);
     }
+
+
+    @DisplayName("[API][POST] 포인트 사용 성공")
+    @Test
+    void usePoints_Success() throws Exception {
+        // Given
+        PointUseRequest request = new PointUseRequest(1L, 1001L, 5_000L);
+        List<PointResult> pointResults = Instancio.ofList(PointResult.class)
+                                                  .size(1)
+                                                  .set(Select.field(PointResult::id), 1L)
+                                                  .set(Select.field(PointResult::userId), request.userId())
+                                                  .set(Select.field(PointResult::amount), 10_000L)
+                                                  .set(Select.field(PointResult::usedAmount), request.useAmount())
+                                                  .create();
+
+        given(pointService.usePoints(any(PointUseCommand.class))).willReturn(pointResults);
+
+        // When & Then
+        mvc.perform(MockMvcRequestBuilders.post("/use")
+                                          .contentType(contentType)
+                                          .content(objectMapper.writeValueAsString(request)))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.size()").value(1))
+           .andExpect(jsonPath("$[0].userId").value(request.userId()))
+           .andExpect(jsonPath("$[0].usedAmount").value(request.useAmount()));
+
+        then(pointService).should(times(1)).usePoints(any(PointUseCommand.class));
+    }
+
+    @DisplayName("[API][POST] 포인트 사용 실패 - 사용 가능 포인트 부족")
+    @Test
+    void usePoints_InsufficientPoints() throws Exception {
+        // Given
+        PointUseRequest request = new PointUseRequest(1L, 1002L, 20_000L);
+
+        willThrow(new GeneralException(ErrorCode.BAD_REQUEST, "사용 가능한 포인트가 부족합니다."))
+            .given(pointService).usePoints(any(PointUseCommand.class));
+
+        // When & Then
+        mvc.perform(MockMvcRequestBuilders.post("/use")
+                                          .contentType(contentType)
+                                          .content(objectMapper.writeValueAsString(request)))
+           .andExpect(status().isBadRequest())
+           .andExpect(jsonPath("$.message", containsString("사용 가능한 포인트가 부족합니다.")));
+
+        then(pointService).should(times(1)).usePoints(any(PointUseCommand.class));
+    }
+
+    @DisplayName("[API][POST] 포인트 사용 실패 - 요청 값 검증 오류")
+    @ParameterizedTest
+    @ValueSource(longs = {0L, -100L}) // 잘못된 포인트 사용 금액
+    void usePoints_ValidationError(long invalidUseAmount) throws Exception {
+        // Given
+        PointUseRequest request = Instancio.of(PointUseRequest.class)
+                                           .set(Select.field(PointUseRequest::useAmount), invalidUseAmount)
+                                           .create();
+
+        // When & Then
+        mvc.perform(MockMvcRequestBuilders.post("/use")
+                                          .contentType(contentType)
+                                          .content(objectMapper.writeValueAsString(request)))
+           .andExpect(status().isBadRequest())
+           .andExpect(jsonPath("$.message", containsString("VALIDATION ERRORS")));
+
+        then(pointService).shouldHaveNoInteractions();
+    }
+
 }

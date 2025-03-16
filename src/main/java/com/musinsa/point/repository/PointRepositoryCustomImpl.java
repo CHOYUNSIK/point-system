@@ -1,9 +1,16 @@
 package com.musinsa.point.repository;
 
+import com.musinsa.point.entity.Point;
 import com.musinsa.point.entity.QPoint;
 import com.musinsa.point.entity.QPointTransaction;
+import com.musinsa.point.entity.enums.PointTransactionType;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -33,5 +40,37 @@ public class PointRepositoryCustomImpl implements PointRepositoryCustom{
                             )
             )
             .execute();
+    }
+
+    @Override
+    public List<Point> findUsablePoints(Long userId) {
+        QPoint point = QPoint.point;
+        QPointTransaction transaction = QPointTransaction.pointTransaction;
+
+        NumberExpression<Long> usedAmount = new CaseBuilder()
+            .when(transaction.transactionType.eq(PointTransactionType.USE)).then(transaction.usedAmount)
+            .otherwise(0L)
+            .sum();
+
+        NumberExpression<Long> canceledAmount = new CaseBuilder()
+            .when(transaction.transactionType.eq(PointTransactionType.CANCEL)).then(transaction.usedAmount)
+            .otherwise(0L)
+            .sum();
+
+        NumberExpression<Long> availableAmount = point.amount.subtract(usedAmount).add(canceledAmount);
+
+        return queryFactory
+            .select(point)
+            .from(point)
+            .leftJoin(point.transactions, transaction)
+            .where(
+                point.userId.eq(userId),
+                point.expirationDate.after(LocalDateTime.now())
+            )
+            .groupBy(point.id)
+            .having(availableAmount.gt(0))
+            .orderBy(point.isManual.desc(), point.expirationDate.asc())
+            .setLockMode(LockModeType.OPTIMISTIC_FORCE_INCREMENT)
+            .fetch();
     }
 }
