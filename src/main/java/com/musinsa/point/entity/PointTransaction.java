@@ -13,6 +13,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -53,6 +54,10 @@ public class PointTransaction {
 
     private Long originalTransactionId;
 
+    @Version
+    @Column(nullable = false, columnDefinition = "bigint default 0")
+    private Integer version;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -60,6 +65,10 @@ public class PointTransaction {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+
+    public long getUserId(){
+       return this.point.getUserId();
+    }
 
     public boolean isUsed() {
         return PointTransactionType.USE == this.transactionType;
@@ -69,12 +78,30 @@ public class PointTransaction {
         return PointTransactionType.CANCEL == this.transactionType;
     }
 
+    public boolean isExpiration() {
+        return point.isExpiration();
+    }
+
+
     public static PointTransaction createUseTransaction(Point point, long usedAmount, long orderId) {
         return PointTransaction.builder()
                                .point(point)
                                .usedAmount(usedAmount)
                                .orderId(orderId)
                                .transactionType(PointTransactionType.USE)
+                               .build();
+    }
+
+    public static PointTransaction createUseCancelTransaction(
+        PointTransaction originalTransaction,
+        long usedAmount
+    ) {
+        return PointTransaction.builder()
+                               .point(originalTransaction.point)
+                               .usedAmount(usedAmount)
+                               .orderId(originalTransaction.orderId)
+                               .transactionType(PointTransactionType.CANCEL)
+                               .originalTransactionId(originalTransaction.id)
                                .build();
     }
 

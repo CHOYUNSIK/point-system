@@ -10,9 +10,11 @@ public record PointTransactionResult(
     long usedAmount,
     long orderId,
     String transactionType,
-    Long originalTransactionId
+    Long originalTransactionId,
+    PointResult point
 
 ) {
+
     public static PointTransactionResult from(PointTransaction entity) {
         return PointTransactionResult.builder()
                                      .id(entity.getId())
@@ -20,6 +22,7 @@ public record PointTransactionResult(
                                      .orderId(entity.getOrderId())
                                      .transactionType(entity.getTransactionType().name())
                                      .originalTransactionId(entity.getOriginalTransactionId())
+                                     .point(PointResult.from(entity.getPoint()))
                                      .build();
     }
 

@@ -12,13 +12,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.musinsa.point.controller.dto.PointEarnRequest;
+import com.musinsa.point.controller.dto.PointUseCancelRequest;
 import com.musinsa.point.controller.dto.PointUseRequest;
 import com.musinsa.point.error.code.ErrorCode;
 import com.musinsa.point.error.exception.GeneralException;
 import com.musinsa.point.service.PointService;
+import com.musinsa.point.service.PointTransactionService;
 import com.musinsa.point.service.dto.PointEarnCommand;
 import com.musinsa.point.service.dto.PointEarnResult;
 import com.musinsa.point.service.dto.PointResult;
+import com.musinsa.point.service.dto.PointTransactionResult;
+import com.musinsa.point.service.dto.PointUseCancelCommand;
+import com.musinsa.point.service.dto.PointUseCancelResult;
 import com.musinsa.point.service.dto.PointUseCommand;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,6 +48,9 @@ class PointControllerTest {
 
     @MockBean
     private PointService pointService;
+
+    @MockBean
+    private PointTransactionService pointTransactionService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -268,5 +276,71 @@ class PointControllerTest {
 
         then(pointService).shouldHaveNoInteractions();
     }
+
+    @DisplayName("[API][POST] 포인트 사용 취소 성공")
+    @Test
+    void cancelUsedPoint_Success() throws Exception {
+        // Given
+        PointUseCancelRequest request = new PointUseCancelRequest(1001L, 5_000L);
+
+        List<PointUseCancelResult> cancelResults = Instancio.ofList(PointUseCancelResult.class)
+                                                            .size(1)
+                                                            .set(Select.field(PointUseCancelResult::cancelPointTransaction), Instancio.create(
+                                                                PointTransactionResult.class))
+                                                            .set(Select.field(PointUseCancelResult::reissuedPoint), Instancio.create(PointEarnResult.class))
+                                                            .create();
+
+        given(pointTransactionService.cancelUsedPoint(any(PointUseCancelCommand.class)))
+            .willReturn(cancelResults);
+
+        // When & Then
+        mvc.perform(MockMvcRequestBuilders.post("/use/cancel")
+                                          .contentType(contentType)
+                                          .content(objectMapper.writeValueAsString(request)))
+           .andExpect(status().isOk())
+           .andExpect(jsonPath("$.size()").value(1));
+
+
+        then(pointTransactionService).should(times(1)).cancelUsedPoint(any(PointUseCancelCommand.class));
+    }
+
+    @DisplayName("[API][POST] 포인트 사용 취소 실패 - 취소 가능 금액 초과")
+    @Test
+    void cancelUsedPoint_ExceedsCancelableAmount() throws Exception {
+        // Given
+        PointUseCancelRequest request = new PointUseCancelRequest(1001L, 20_000L);
+
+        willThrow(new GeneralException(ErrorCode.BAD_REQUEST, "취소 가능한 금액을 초과하여 사용할 수 없습니다."))
+            .given(pointTransactionService).cancelUsedPoint(any(PointUseCancelCommand.class));
+
+        // When & Then
+        mvc.perform(MockMvcRequestBuilders.post("/use/cancel")
+                                          .contentType(contentType)
+                                          .content(objectMapper.writeValueAsString(request)))
+           .andExpect(status().isBadRequest())
+           .andExpect(jsonPath("$.message", containsString("취소 가능한 금액을 초과하여 사용할 수 없습니다.")));
+
+        then(pointTransactionService).should(times(1)).cancelUsedPoint(any(PointUseCancelCommand.class));
+    }
+
+    @DisplayName("[API][POST] 포인트 사용 취소 실패 - 요청 값 검증 오류")
+    @ParameterizedTest
+    @ValueSource(longs = {0L, -100L})  // 잘못된 취소 금액
+    void cancelUsedPoint_ValidationError(long invalidCancelAmount) throws Exception {
+        // Given
+        PointUseCancelRequest request = Instancio.of(PointUseCancelRequest.class)
+                                                 .set(Select.field(PointUseCancelRequest::cancelAmount), invalidCancelAmount)
+                                                 .create();
+
+        // When & Then
+        mvc.perform(MockMvcRequestBuilders.post("/use/cancel")
+                                          .contentType(contentType)
+                                          .content(objectMapper.writeValueAsString(request)))
+           .andExpect(status().isBadRequest())
+           .andExpect(jsonPath("$.message", containsString("VALIDATION ERRORS")));
+
+        then(pointTransactionService).shouldHaveNoInteractions();
+    }
+
 
 }

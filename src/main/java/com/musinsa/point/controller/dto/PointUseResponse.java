@@ -16,11 +16,11 @@ public record PointUseResponse(
     LocalDateTime expirationDate,
     long usedAmount,
     long availableAmount,
-    List<PointTransactionResponse> pointTransaction
+    List<PointTransactionDetail> pointTransaction
 ) {
 
     @Builder(access = AccessLevel.PRIVATE)
-    public record PointTransactionResponse(
+    public record PointTransactionDetail(
         long id,
         long usedAmount,
         long orderId,
@@ -28,14 +28,14 @@ public record PointUseResponse(
         Long originalTransactionId
 
     ) {
-        public static PointTransactionResponse from(PointTransactionResult transaction) {
-            return PointTransactionResponse.builder()
-                                           .id(transaction.id())
-                                           .usedAmount(transaction.usedAmount())
-                                           .orderId(transaction.orderId())
-                                           .transactionType(transaction.transactionType())
-                                           .originalTransactionId(transaction.originalTransactionId())
-                                           .build();
+        public static PointTransactionDetail from(PointTransactionResult transaction) {
+            return PointTransactionDetail.builder()
+                                         .id(transaction.id())
+                                         .usedAmount(transaction.usedAmount())
+                                         .orderId(transaction.orderId())
+                                         .transactionType(transaction.transactionType())
+                                         .originalTransactionId(transaction.originalTransactionId())
+                                         .build();
         }
     }
 
@@ -48,7 +48,7 @@ public record PointUseResponse(
                           .expirationDate(point.expirationDate())
                           .usedAmount(point.usedAmount())
                           .availableAmount(point.availableAmount())
-                          .pointTransaction(point.pointTransactionList().stream().map(PointTransactionResponse::from).toList())
+                          .pointTransaction(point.pointTransactionList().stream().map(PointTransactionDetail::from).toList())
                           .build();
     }
 }

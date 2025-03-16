@@ -25,6 +25,15 @@ public record PointEarnCommand(
                                .build();
     }
 
+    public static PointEarnCommand of(long userId, long amount, int defaultExpirationDays) {
+        return PointEarnCommand.builder()
+                               .userId(userId)
+                               .amount(amount)
+                               .isManual(false)
+                               .expirationDays(defaultExpirationDays)
+                               .build();
+    }
+
     public Point toEntity() {
         return Point.builder()
                     .userId(userId)
@@ -32,9 +41,5 @@ public record PointEarnCommand(
                     .isManual(isManual)
                     .expirationDate(LocalDateTime.now().plusDays(expirationDays))
                     .build();
-    }
-
-    public long calculateTotalAvailablePoints(long userAvailablePoints) {
-        return this.amount + userAvailablePoints;
     }
 }

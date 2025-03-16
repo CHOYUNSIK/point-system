@@ -70,6 +70,10 @@ public class Point {
     private List<PointTransaction> transactions = new ArrayList<>();
 
 
+    public boolean isExpiration(){
+        return this.expirationDate.isBefore(LocalDateTime.now());
+    }
+
     public long getUsedAmount() {
         return transactions.stream()
                            .mapToLong(transaction -> {

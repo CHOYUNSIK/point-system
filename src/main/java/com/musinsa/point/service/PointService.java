@@ -1,5 +1,6 @@
 package com.musinsa.point.service;
 
+import com.musinsa.point.config.annotation.OptimisticRetry;
 import com.musinsa.point.entity.Point;
 import com.musinsa.point.error.code.ErrorCode;
 import com.musinsa.point.error.exception.GeneralException;
@@ -13,9 +14,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,11 +32,7 @@ public class PointService {
 
     private final UserPointLimitService userPointLimitService;
 
-    @Retryable(
-        retryFor = ObjectOptimisticLockingFailureException.class,
-        maxAttempts = 5,
-        backoff = @Backoff(delay = 100, multiplier = 2)
-    )
+    @OptimisticRetry
     @Transactional
     public PointEarnResult earnPoints(PointEarnCommand command) {
         validatePointAmount(command.amount());
@@ -54,11 +48,6 @@ public class PointService {
 
     @Transactional
     public long getTotalAvailableBalance(long userId) {
-        /*List<Point> validPoints = pointRepository.findByUserIdAndExpirationDateAfterOrderByIsManualDescExpirationDateAsc(
-            userId,
-            LocalDateTime.now()
-        );*/
-
         List<Point> validPoints = pointRepository.findUsablePoints(userId);
 
         return validPoints.stream()
@@ -88,17 +77,13 @@ public class PointService {
     }
 
 
-    @Retryable(
-        retryFor = ObjectOptimisticLockingFailureException.class,
-        maxAttempts = 5,
-        backoff = @Backoff(delay = 100, multiplier = 2)
-    )
+    @OptimisticRetry
     @Transactional
     public List<PointResult> usePoints(PointUseCommand command) {
         long userId = command.userId();
         long totalAvailableBalance = getTotalAvailableBalance(userId);
-        long useAmount  = command.useAmount();
-        if (totalAvailableBalance < useAmount ) {
+        long useAmount = command.useAmount();
+        if (totalAvailableBalance < useAmount) {
             throw new GeneralException(ErrorCode.BAD_REQUEST, "사용 가능한 포인트가 부족합니다.");
         }
 
@@ -106,10 +91,13 @@ public class PointService {
         List<PointResult> pointResultList = new ArrayList<>();
         long remainingAmount = useAmount;
         for (Point point : pointList) {
-            if (remainingAmount == 0) break;
+            if (remainingAmount == 0) {
+                break;
+            }
             long useThisTime = Math.min(point.getAvailableAmount(), remainingAmount);
             point.usePoints(useThisTime, command.orderId());
-            pointResultList.add(PointResult.from(pointRepository.save(point)));
+            Point save = pointRepository.save(point);
+            pointResultList.add(PointResult.of(save, save.getTransactions()));
             remainingAmount -= useThisTime;
         }
         if (remainingAmount > 0) {
